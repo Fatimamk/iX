@@ -1,3 +1,4 @@
+var db = firebase.database();
 
 class Task {
     constructor(id, title) {
@@ -27,7 +28,7 @@ class Task {
                 const taskListElement = document.getElementById("taskList"); //get table from HTML file, call it taskListElement
                 const row = document.createElement("tr"); //make table row called row
                 row.setAttribute("data-task-id", task.id); 
-                row.setAttribute("delstatus", "false"); 
+                row.setAttribute("delstatus", "true"); 
                 row.innerHTML = `
                 <td>${task.title}</td>
                 <td><button data-action="edit" data-task-id="${task.id}" class="btn btn-primary">Edit</button></td>
@@ -42,7 +43,7 @@ class Task {
     }
     
     addTask(title) {
-      const taskId = this.tasks.length+1; //taskId = number position in list (1st, 2nd, 3, 4)
+      const taskId = db.ref().child('tasks').push().key; //taskId = number position in list (1st, 2nd, 3, 4)
       const task = new Task(taskId, title); //use Task class to make new task called task
       this.tasks.push(task); //add new task to task list 
   
@@ -79,7 +80,7 @@ class Task {
       console.log(this.tasks)
       for (let k = 0; k < this.tasks.length; k++) { //for every task 
         if (this.tasks[k].id == taskId) { //once you reach the row with the matching id as position in array
-          console.log("if statement executed")
+          //console.log("if statement executed")
           const task = this.tasks[k]; //task is now oject in postion of array of row clicked 
           const taskInputElement = document.getElementById("task");
           taskInputElement.value = task.title; //change input bar text in table to value of cell being edited
@@ -88,6 +89,7 @@ class Task {
         }
       }
     }
+
     saveTaskTitle(taskId, taskTitle) {
   
       const task = this.tasks.find((task) => task.id == taskId);  //find inputted text in array or tasks and meke it the value of task where the task Id matches the cell Id
@@ -99,7 +101,7 @@ class Task {
       const existingRow = document.querySelector(`tr[data-task-id="${task.id}"]`);
       if (!existingRow) return;
       
-      const db = firebase.database();
+      
       db.ref('tasks/').once('value').then(function(snapshot) {
         const key = Object.keys(snapshot.val())[task.id-1]
         let taskDb = db.ref('tasks/'+key);
@@ -119,34 +121,36 @@ class Task {
 
     delTask(taskId){
 
-      const task = this.tasks.find((task) => task.id == taskId);
-      const db = firebase.database();
-      const existingRow = document.querySelector(`tr[data-task-id="${task.id}"]`);
-      if (!existingRow) return;
+      db.ref(`tasks/${taskId}`).remove();
+      document.querySelector(`tr[data-task-id="${taskId}"]`).remove();
 
-      db.ref('tasks/').once('value').then(function(snapshot) {
-        let key = Object.keys(snapshot.val())[task.id-1]
-        db.ref('tasks/'+ key).remove();
+      // const task = this.tasks.find((task) => task.id == taskId);
+      // const existingRow = document.querySelector(`tr[data-task-id="${task.id}"]`);
+      // if (!existingRow) return;
 
-        existingRow.innerHTML =``; 
-        console.log(task.id);
+      // db.ref('tasks/').once('value').then(function(snapshot) {
+      //   let key = Object.keys(snapshot.val())[task.id-1]
+      //   db.ref('tasks/'+ key).remove();
 
-        db.ref('tasks/').once('value').then(function(snapshot) {
-              let i = 0;
-              Object.keys(snapshot.val()).forEach(key => {
-              let taskDb = db.ref('tasks/'+ key);
-              i++
-                taskDb.update({
-                  id: i,
-                }); 
+      //   existingRow.innerHTML =``; 
+      //   console.log(task.id);
+
+      //   db.ref('tasks/').once('value').then(function(snapshot) {
+      //         let i = 0;
+      //         Object.keys(snapshot.val()).forEach(key => {
+      //         let taskDb = db.ref('tasks/'+ key);
+      //         i++
+      //           taskDb.update({
+      //             id: i,
+      //           }); 
                 
-              })          
-        })
-      });
-      let test = this.tasks;
-      console.log(test[task.id-1])
-      console.log(test.splice(task.id-1,1));
-      console.log(test);
+      //         })          
+      //   })
+      // });
+      // let test = this.tasks;
+      // console.log(test[task.id-1])
+      // console.log(test.splice(task.id-1,1));
+      // console.log(test);
     }
   }
 
